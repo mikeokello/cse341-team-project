@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import trips from './seeds/trips.json' with { type: 'json' };
 import schedules from './seeds/schedules.json' with { type: 'json' };
 import stations from './seeds/stations.json' with { type: 'json' };
@@ -26,6 +27,26 @@ const initializeDatabase = async (db) => {
   const confirmations = db.collection('confirmations');
   await confirmations.deleteMany({});
   await confirmations.createIndex({ id: 1 }, { unique: true });
+
+  const roles = db.collection('roles');
+  await roles.deleteMany({});
+  await roles.insertMany([{ name: 'admin' }, { name: 'user' }]);
+
+  const users = db.collection('users');
+  await users.createIndex({ username: 1 }, { unique: true });
+  await users.createIndex({ email: 1 }, { unique: true });
+  const existingAdmin = await users.findOne({ username: 'admin' });
+  if (!existingAdmin) {
+    const passwordHash = await bcrypt.hash('Admin123!', 10);
+    await users.insertOne({
+      displayName: 'Admin User',
+      username: 'admin',
+      email: 'admin@kizuna.test',
+      passwordHash,
+      role: 'admin',
+      createdAt: new Date()
+    });
+  }
 };
 
 export { initializeDatabase, starterCollections };
