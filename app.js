@@ -1,6 +1,7 @@
 import express from 'express';
 import Path from 'path';
 import { fileURLToPath } from 'url';
+import session from 'express-session';
 import pkg from './package.json' with { type: 'json' };
 import globalMiddleware from './src/middleware/global.js';
 import routes from './src/routes/router.js';
@@ -25,6 +26,14 @@ app.set('views', Path.join(__dirname, 'src/views'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Session - must be BEFORE globalMiddleware and routes
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'kizuna-dev-secret-change-me',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 24 }
+}));
+
 app.use(globalMiddleware);
 app.use('/', routes);
 
@@ -38,9 +47,9 @@ app.use((req, res, next) => {
 // Render the appropriate error page.
 app.use((err, req, res, next) => {
     const status = err.status || 500;
-    const template = status === 404 ? '404' : '500';
+    const template = status === 404 ? '404' : status === 403 ? '403' : '500';
     const context = {
-        title: status === 404 ? 'Page Not Found' : 'Server Error',
+        title: status === 404 ? 'Page Not Found' : status === 403 ? 'Forbidden' : 'Server Error',
         error: err.message,
         stack: err.stack
     };

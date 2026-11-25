@@ -1,0 +1,8 @@
+<%- include('../partials/header') %>
+<main>
+  <h1>Admin Dashboard</h1>
+  <p>Welcome, <%= currentUser.displayName %> (<%= currentUser.role %>)</p>
+  <p>This is the admin-only page. Regular users get a 403 here.</p>
+  <a href="/logout">Logout</a>
+</main>
+<%- include('../partials/footer') %>
